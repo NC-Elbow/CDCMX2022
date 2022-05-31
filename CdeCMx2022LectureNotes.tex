@@ -540,10 +540,192 @@ Now that we have set up our distance calculations and our goal of minimizing sai
 
 \section{Wednesday}
 \subsection{How to get a better Solution}
+
+We've now taken a shot at solving the North American Traveling Salesman problem with a variety of neighbor solutions. Hopefully we've also used different neighboring techniques.  Let's see who has the best solution so far.
+There is no guarantee that this is the globally optimal solution, but it's possible.  Remember, in order to verfiy this we'd need to check all $95!$ possible paths.  However, let's again take our cue from the physical world and see what makes a great sword or a great knife.  A great knife is made by having an already decent knife to begin with, heating it up extremely hot,no hotter than that... still hotter, hotter, there.  Then ``quenching" which means cooling it very quickly.  Basically dousing it in a liquid.  It's a funny fact, that the dousing liquid's composition can drastically change the final outcome too, but we aren't going to that level of detail in our simulated annealing just yet.
+
+So here are some suggestions to get a better solution, Try doing a partial anneal, and leave an ok, but obviously wrong ``solution" in play. This solution should still have some tangles and crossings etc, but mostly good.  Now, slow down the annealing and play around with a different neighboring method.
+
+You can break this up into several cooling phases and neighbor selections.  Usually this will get you over a hump.
+
+A second suggestion is to break up the solution into smaller, tractable problems.  For example, 19 points is a fairly easy problem for a simulated annealing algorithm to ``solve."  So we may want to cluster our cities into groups of 19, solve the 5 individual groups and than add the connections between groups.  This can be done in the most naive way of finding the two closest points in each cluster and adding the connections there.
+
 \subsection{Competing Algorithms}
+
+Hopefully we've tried a couple of these solution techniques and we've gotten slightly different plausible solutions. One of the several  tried and true techniques I use in machine learning in general is to make algorithms compete.  Where they agree on the solution, that's what I use and take to investors and CEOs and other business types who don't really care about the machine learning, but are much more focused on the business strategy.
+So instead of stopping the anneal in the middle, and switching up the neighbors and temperature selections, why not run them all together in parallel?  We can also run a full algorithm really fast and use the ``solution" as a seed for the other.  In essence, run two annealing algorithms with different parameter selections and then use their respective solutions as seeds for the other.
+\begin{itemize}
+	\item Run Algorithm 1
+	\item Run Algorithm 2
+	\item Send Solution 1 to Algorithm 2
+	\item Send Solution 2 to Algorithm 1
+\end{itemize}
+
+There are as many variations on this as you want.
+You can even run entirely different algorithms (not just annealing) and play this game.  For example, algorithm 2 could be a genetic algorithm instead of an annealing algorithm. Or the second algorithm could be reverse annealing (something which I don't really like, based on empirical results.)
+
 \subsection{Coupled Models}
+
+In the statistical sciences Markov Chain Monte Carlo methods have shown great success in learning probability distributions and statistics of different studies.  They are extremely useful for giving good election forecasts and settling high dimensional problems which are hard to visualize, but easy to compute.  We've already talked about the weather, but this shows up in the social sciences and biological sciences a lot: Elections, polls, pharmaceutical studies, medical studies,chemical reactions, flight simulations, stock predictions, pricing of commodities, etc.
+
+In 1991 Geyer found that as well as MCMC algorithms perform (in this particular case he used the Metropolis Hasting algorithm), they tend to take a very long time to converge when the distribution is multimodal.  (give a picture here)  Thus we proposed the idea of a Chained MCMC model, which for the sake of naming has become a Metropolis Chained Markov Chain Monte Carlo or MCMCMC.
+
+\begin{rem}
+	Nicholas Metropolis was a Greek-American statistician and had easily the greatest name ever.  If I had a name as cool as Metropolis I'd be inventing algorithms left and right just to get my name of them. 
+\end{rem}
+
+
+
+What we'vebeen focusing on this week is using MCMC algorithms in the form of simulated annealing to make them optimization algorithms.  So with that in mind, last summer I wrote the first (to my knowledge) Metropolis Coupled Simulated Annealing algorithm (MCSA) where I run multiple chains of simulated annealers for one temperature each with a different type of neighboring solution and then rank them by how well they've done.  Then I change the temperature decrements and neighbor selections with a little randomness (an additional Monte Carlo step) and carry it out until one chain is frozen.
+
+
 \subsection{Intro to Quantum Walks on Graphs}
 
+Maybe you haven't studied quantum mechanics, and you don't it just yet, but a few basic may help.  For the sake of simplicity we'll definitely stick to continuous quantum walks on graphs.
+
+So here are some basics:
+The main object we're concerned with if a function called the \emph{wave} function.  It's generally denoted $\psi$ or $\Psi$ or $\ket{\psi}$ more on that funny notation later. This function is subject to a very famous equation called the \emph{Sch\"{o}dinger} equation which you may recognize as 
+\[
+\frac{\partial \Psi}{\partial t} = \left(-i\hbar\nabla^2 + V(\vec{x},t)\right) \Psi
+\]
+
+We can reduce this in a lot of different ways, almost none of which I'll write for you here.  The main message to take away is that this is simply a partial differential equation which at it's heart looks like
+\[
+\frac{\partial \Psi}{\partial t} = U(\vec{x},t,\Psi)
+\]
+And a crucially important point is that $U$ is a unitary operator.  In the wide world of advanced mathematics, that has a very specific meaning, but in the world of linear algebra, specifically Matrix algebra a unitary matrix is one in which 
+\[
+U^{\dag} = \bar{U}^T = U^{-1}
+\]
+
+That is, the complex conjugate transpose is the inverse.  If you've never seen something like this before, you're probably cursing me right now, and hopefully in Spanish.  However, while finding matrices like this out in the wild isn't so easy, we have a really easy construction for them.  
+\begin{thm}
+	Let $A$ be a square symmetric matrix, that is $A^T = A$ then for any $t\in\R$ the matrix
+	\[
+	e^{itA} 
+	\]
+	is unitary.
+\end{thm}
+
+The proof is quite simple. since $A^T = A$.  We get  $\left(e^{tA}\right)^T = e^{tA}$ for free. And the complex conjugate is really easy. 
+\[
+\bar{e^{itA}} = e^{-itA}
+\]
+
+Finally for the inverse $e^{-itA}e^{itA} = I$.  That's becauase $A$ natturally comutes with itself and so we can (if we really like to punish ourselves) expand the power series and collect terms, we'll find, only the identity is leftover.
+
+\[
+\left(e^{itA}\right)^{\dag} = e^{-itA} = \left(e^{itA}\right)^{-1}
+\]
+
+Well, it turns out we know plenty of such matrices which are symmatric: The adjacency matrices of undirected graphs.  We have a small problem.  The walking matrix from before $W = D^{-1}A$ is not symmetric unless the graph is regular.  So we take care of this in a difference way.  The matrix we actually consider is aclled the matrix \emph{Laplacian} (yes, I know, a lot of old dead dudes with their names on stuff....)
+
+\[
+L = D - A
+\]  
+
+Since the degrees are on the diagonal, the Laplacian is symmetric.  
+
+Now back to quantum mechanics.  We had this funny other symbol $\ket{\psi}$.  This is Dirac's (again another dead dude) notation for a vector.  At the level of freshman and sophomore level physics this seems totally ridiculous, but trust me, this grew out of a much more organic process in need a notation that is highly versatile and really works.  One of the very few rewritten Sch\"{o}dinger equations I'll actually show you is this.
+
+\[
+\frac{\partial \psi}{\partial t} = -iL\psi  
+\]
+(Does this look familiar?  Maybe a continuous Markov Chain!?!?!?)
+
+Which we may have seen in basic differential equations as having the solution
+\[
+\psi(t) = e^{-itL}\psi(0)
+\]
+
+If we make our life really easy (notationally) we can just rewrite this whole thing in our final Sch\"{o}dinger rewrite.
+
+
+\[
+\ket{\psi(t)} = U(t) \ket{\psi(0)}
+\]
+
+ooh!  Ah!  wow!
+
+When we're thinking about a graph, and a random walk on it, the vector $\ket{\psi(t)}$ represents our quantum walker at time $t$.  Since this is quantum mechanics we use amplitudes instead of probabilities and that means our vector has length 1 instead of sum 1.  Hence the importance of the unitary matrix which in reality means it doesn't change a vector's length.  That's the whole point!  
+
+
+In the classical scenario, we measure our probability of being at a specific vertex by reading the corresponding item in the vector.
+
+For example
+\[
+v = 0.1, 0.2, 0.3, 0.4
+\]
+
+Means we have a $0.1$ probability of being at vertex 1, $0.2$ probability of being at vertex 2, etc.
+
+In the quantum world it's slightly more complicated, but not much.  Recall that our vectors need to have unit legnth and not unit sum.  So these are what we call amplitudes. The probability of having our quantum walker at vertex $n$ after time $t$ is 
+\[
+Pr(\ket{\psi(t)} \text{ at } \ket{n}) = \bra{n} U(t) \ket{psi(0)} = \langle n | \psi(t) \rangle
+\]
+
+That is to say we take the inner product.  In this case the backward looking thing $\bra{\psi}$ is called a \emph{bra} and the forward looking thing is called the \emph{ket} together making ``bracket" notation.  The ket is a normal column vector like we've always used, but the bra is the conjugate transpose vector in keeping with complex valued norms.
+
+
+Let's give an example before we go into any more gross details and justifications.  Let's consider the graph $C_6$ which looks like a hexagon.
+
+\[
+\begin{tikzpicture}
+\node[circle,draw] (1) at (3,0){1};
+\node[circle,draw] (2) at (1.5,2.6){2};
+\node[circle,draw] (3) at (-1.5,2.6){3};
+\node[circle,draw] (4) at (-3,-0){4};
+\node[circle,draw] (5) at (-1.5,-2.6){5};
+\node[circle,draw] (6) at (1.5,-2.6){6};
+\foreach \from/\to in {1/2,2/3,3/4,4/5, 5/6, 6/1}
+\draw (\from) -- (\to);
+\end{tikzpicture}
+\]
+
+We have the associated matrices
+\begin{enumerate}
+	\item $A = \begin{bmatrix}
+		0 & 1 & 0 & 0 & 0 & 1\\
+		1 & 0 & 1 & 0 & 0 & 0\\
+		0 & 1 & 0 & 1 & 0 & 0\\
+		0 & 0 & 1 & 0 & 1 & 0\\
+		0 & 0 & 0 & 1 & 0 & 1\\
+		1 & 0 & 0 & 0 & 1 & 0
+	\end{bmatrix}$
+    \item $D = \begin{bmatrix}
+        2 & 0 & 0 & 0 & 0 & 0\\
+        0 & 2 & 0 & 0 & 0 & 0\\
+        0 & 0 & 2 & 0 & 0 & 0\\
+        0 & 0 & 0 & 2 & 0 & 0\\
+        0 & 0 & 0 & 0 & 2 & 0\\
+        0 & 0 & 0 & 0 & 0 & 2
+    \end{bmatrix} = 2I$ Because this is a regular graph.
+    \item  $L = \begin{bmatrix}
+    	2 & -1 & 0 & 0 & 0 & -1\\
+    	-1 & 2 & -1 & 0 & 0 & 0\\
+    	0 & -1 & 2 & -1 & 0 & 0\\
+    	0 & 0 & -1 & 2 & -1 & 0\\
+    	0 & 0 & 0 & -1 & 2 & -1\\
+    	-1 & 0 & 0 & 0 & -1 & 2
+    \end{bmatrix}$
+    \item  And for posteriety, to tie the week together if you want to work through this:
+    $W = \begin{bmatrix}
+    0 & 1/2 & 0 & 0 & 0 & 1/2\\
+    1/2 & 0 & 1/2 & 0 & 0 & 0\\
+    0 & 1/2 & 0 & 1/2 & 0 & 0\\
+    0 & 0 & 1/2 & 0 & 1/2 & 0\\
+    0 & 0 & 0 & 1/2 & 0 & 1/2\\
+    1/2 & 0 & 0 & 0 & 1/2 & 0
+    \end{bmatrix}$
+    \end{enumerate}
+
+Now let's look at a classical walk.  If we start at vertex 1 in one step we can get to vertex 2 or 6.  After two steps we can get to 1(probability $\half$ ),3 or 5 probability $\frac{1}{4}$ each) and after 3 steps we could finally get to vertex 4 (probability $\frac{1}{8})$
+
+So let's do something crazy... Let's quantum walk for time $0.1, 0.5, 0.9, 1.1, 1.5, 1.9, 2.1, 2.5, 2.9,$ and finally $3.0$ We can really see the big difference in walking quantum mechanically versus classically. Then we can show some plots.
+
+\begin{tabular}
+
+\end{tabular}
 \section{Thursday}
 \subsection{Properties of the North America Graph via Monte Carlo}
 \subsection{A Quantum Walk Through North America}
