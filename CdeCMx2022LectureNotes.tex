@@ -462,7 +462,7 @@ Now let's take this toy out for a spin.  We're going to minimize the route we ne
 Some suggestions here. For the time being, distance will be the standard Euclidean distance in 2D.
 \[
 d(x,y) = \|x-y\| = \sqrt{(x_1-y_1)^2 + (x_2-y_2)^2}
-\]]
+\]
 
 The score will be the sum of all distances traveled including returning home.
 So we'll have
@@ -754,8 +754,71 @@ time & $v_1$ & $v_2$ & $v_3$ & $v_4$ & $v_5$ & $v_6$\\
 %0.352132  0.0751176  0.618826    0.314367     0.618826    0.0751176
 %0.339938  0.0460985  0.650054    0.187219     0.650054    0.0460985
 
+
+There are some really exciting results here.  Most noatbly the probability of hitting vertex 4 after 1 unit of time, reaching a maximum (in our experiment at 2.1 units of time).  I ran a Monte Carlo simulation of this (rather than computing the full derivative) and found the maximum value occurs at $\approx 2.0944$ units of time.
+% add a few graphs here.
+
+
 \section{Thursday}
 \subsection{Properties of the North America Graph via Monte Carlo}
+
+In random walks on graphs there are some interesting properties we want to think about.  For example back in \S3.7.1 we talked about \emph{hitting time, cover time} and there is another called \emph{commute time} which is simply
+\[
+\kappa(u,v) = H(u,v) + H(v,u)
+\]
+which is interesting because this satisfies all the criteria to be a metric on a graph. But as simple as these definitions are, on graphs which are reasonably complex or bigger than a roughly trivial graph or a complete graph, actual calculating these things are quite difficult. So let's look at how a Monte Carlo Analysis might shed some light on this.  Let's try this explicitly.  On the North America graph, let's see if we can calculate the hitting time between Jalisco and Illinois (and also in the reverse direction).  You will notice that while it is possible to get from one to the other in a minimum of 6 steps, that is extremely unlikely to happen.  Here are a couple of paths
+\begin{enumerate}
+	\item Jalisco, Zacatecas, Coahuila, Texas, Arkansas, Missouri, Illinois
+	\item Jalisco, Zacatecas, Coahuila, Texas, Oklahoma, Missouri, Illinois
+\end{enumerate}
+
+However, these are extremely unlikely to happen in a random walk of 6 steps.
+For example, the first walk will happen with the following probabilities:
+\begin{itemize}
+	\item Jalisco to Zacatecas $1/4$
+	\item Zacatecas to Coahuila $1/6$
+	\item Coahuila to Texas $1/5$
+	\item Texas to Arkansas $1/8$
+	\item Arkansas to Missouri $1/6$
+	\item Missouri to Illinois $1/8$
+	\item Total $1/46080$ ($\leftarrow$ not good odds)
+\end{itemize}
+
+The other path has exactly the same odds, so for either of these to happen, we're looking at $1/23040$ still not great odds.  There are a lot of paths in which we can travel in 7 steps, but again, these are unlikely.  But rather than actually counting all the possible paths let's simulate the walks and count how long to hit Illinois starting in Jalisco.
+
+The algorithm will look something like this.
+
+\begin{algorithm}
+	\caption{Monte Carlo Hitting Time}
+	\label{Estimate Hitting Time from Jalisco to Illinois.}
+	\begin{algorithmic}[1]
+		\Procedure{Get Hitting Time}{Start Vertex, End Vertex}
+		\State $v_0 \gets $ start vertex
+		\State set counter $=0$ 
+		\While {$v_1 \ne$ end vertex}
+		\State counter $+= 1$
+		\State Perform one step in Random Walk $v1 \gets $ new vertex.
+		\EndWhile
+		\EndProcedure
+	\end{algorithmic}	
+\end{algorithm}   
+
+
+This procedure gets a single ``minimal" hitting time.  As we see in the definition, hitting time is the expectation (average) of minimal hitting times. So we perform this algorithm many many times (A Monte Carlo simulation) and take the average.  The more times we perform this simple procedure, the more likely we are to get a precise number.
+
+If we have a good computer then we can consider computing the following sequence
+\[
+p_n = v^t_0 W^n v_f
+\]
+That is, what is the probability of landing on our final vertex $(v_f)$ in $n$ steps after having begun at the initial vertex $(v_0)$.  This is roughly equivalent to computing the matrix $W^n$ for some large $n$ (meaning that we are within $\varepsilon$ of the steady state vector.)  This is something we get from the spectral gap.  Then we consider
+\[
+v^t_0 W^n v_f \approx \pi^t v_f
+\]
+Then expected number of steps is the reciprocal of this $1/\pi^t v_f$
+
+
+
+
 \subsection{A Quantum Walk Through North America}
 
 \end{document}
