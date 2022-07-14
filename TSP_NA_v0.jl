@@ -1,5 +1,5 @@
 using LinearAlgebra, StatsBase, Statistics
-using DataFrames, CSV
+using DataFrames, CSV, Plots
 #= 
 This is the simmulated annealer to solve the traveling salesman problem through
 the state capitals of North America
@@ -80,6 +80,35 @@ function switchTwoPoints(points::Matrix)
     return newPoints    
 end    
 
+function reverseTwoSections(points::Matrix)
+    nPoints = size(points)[1]
+    v = collect(1:nPoints)
+    r1, r2, r3, r4  = sort(sample(v,4,replace = false))
+    v[r1:r2] = v[collect(r2:-1:r1)]
+    v[r3:r4] = v[collect(r4:-1:r3)]
+    newPoints = points[v,:]
+    return newPoints    
+end
+
+function shiftSectionByOneRight(points::Matrix)
+   nPoints = size(points)[1] 
+   v = collect(1:nPoints)
+   r1, r2 = sort(sample(v,2,replace = false))
+   v[r1:r2] = [v[r1+1:r2];v[r1]]
+   newPoints = points[v,:]
+   return newPoints
+end     
+
+function switchTwoBlocks(points::Matrix)
+    nPoints = size(points)[1]
+    v = collect(1:nPoints)
+    r1, r2, r3, r4  = sort(sample(v,4,replace = false))
+    newV = [v[1:r1-1];v[r3:r4];v[r2+1:r3-1];v[r1:r2];v[r4+1:end]]
+    newPoints = points[newV,:]
+    return newPoints    
+end #function    
+
+
 function calculateDistanceBetweenTwoPoints(pt1::Vector, pt2::Vector)
     D = Lambert(pt1[1],pt1[2],pt2[1],pt2[2])[1] #get actual distance on this earth between two lat/long pairs
     # This can be changed to Haversine, Euclidean, etc
@@ -106,34 +135,34 @@ function plotTrip(points)
     The coordinates are listed as lat/long, but in our plotting
     longitude is equivalent to our "x" coordinate, so we switch the columns
     =#
-    points = [point[:,end] points[:,end-1]] #Latitude and Longitude are the final two columns
+    points = [points[:,end] points[:,end-1]] #Latitude and Longitude are the final two columns
     trip = [points; points[1,:]']
     plot(trip[:,1], trip[:,2])
 end    
 
-function anneal(points::Matrix)
+function anneal(points::Matrix, getNeighbor::Function)
     T = .09
     shortestDistance = calculateTripDistance(points[:,end-1:end]) #use lat/long as final two columns
     shortestTrip = points
     currentDistance = shortestDistance #only a copy of this
     currentTrip = points
     while T > 0.0025 #freezing temperature
-        for sweep = 1:30000 #num trials at each temperature
-            newTrip = reverseSection(currentTrip)
+        for sweep = 1:500 #num trials at each temperature
+            newTrip = getNeighbor(currentTrip)
             newDistance = calculateTripDistance(newTrip[:, end-1:end])
             if newDistance < shortestDistance
                 shortestDistance = newDistance
                 shortestTrip = newTrip
                 currentDistance = newDistance
                 currentTrip = newTrip
-                println(shortestDistance) #can comment this away if desired
-                println(T)#can comment this away if desired
+                #println(shortestDistance) #can comment this away if desired
+                #println(T)#can comment this away if desired
             elseif acceptanceProbability(newDistance,currentDistance,T) > rand()
                 currentTrip = newTrip
                 currentDistance = newDistance
             end
         end
-        T *= 0.97 #cool by some%      
+        T *= 0.975 #cool by some%      
     end
     println(shortestDistance)
     #plotTrip(shortestTrip)
@@ -152,3 +181,50 @@ nadf = Array(df[!,[Symbol("State Abbreviations"),:Latitude,:Longitude]])
 We're only keeping the column with Abbreviations and lat/long
 In this way we can keep track of the states in order of traversal
 =#
+
+function calculateRatio(pts::Array) #points should be nx3
+    olddist = calculateTripDistance(pts[:,2:3])
+    newpts = anneal(pts, reverseSection);
+    newdist = calculateTripDistance(newpts[:,2:3])
+    ratio = newdist/olddist
+    return ratio, newpts
+end #function
+
+function getBest(pts, numIterations)
+    bestRatio = 1
+    bestPts = pts
+    ratios = []
+    for k = 1:numIterations
+        r,newpts = calculateRatio(pts)
+        push!(ratios, r)
+        if r < bestRatio
+            bestRatio = r
+            bestPts = newpts
+            println(r)
+        end #if
+    end # for
+    return bestRatio, bestPts
+end #function            
+
+#=
+To run this
+
+df = CSV.read("/home/clark/Computing/data_sets/NorthAmericaLatLong_Alphabetized.csv") |> DataFrame
+
+nadf = Array(df[!,[Symbol("State Abbreviations"),:Latitude,:Longitude]])
+
+newNAdf = anneal(nadf, reverseSection)
+newNAdf = anneal(newNAdf, reverseSection)
+newNAdf = anneal(newNAdf, switchTwoBlocks)
+newNAdf = anneal(newNAdf, switchTwoPoints)
+newNAdf = anneal(newNAdf, shiftSectionByOneRight)
+newNAdf = anneal(newNAdf, reverseTwoSections)
+newNAdf = anneal(newNAdf, reverseSection)
+
+olddist = calculateTripDistance(nadf[:,2:3])  # 215893.36359872934
+
+best ratio is 
+35465.9266/olddist = 0.16427
+=#
+
+
