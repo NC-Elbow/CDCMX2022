@@ -128,7 +128,7 @@ function plotTrip(points)
     =#
     points = [points[:,end] points[:,end-1]] #Latitude and Longitude are the final two columns
     trip = [points; points[1,:]']
-    plot(trip[:,1], trip[:,2])
+    plot(trip[:,1], trip[:,2], label = "viaje", markershape =:circle)
 end    
 
 function anneal(points::Matrix, getNeighbor::Function)
@@ -138,7 +138,7 @@ function anneal(points::Matrix, getNeighbor::Function)
     currentDistance = shortestDistance #only a copy of this
     currentTrip = points
     while T > 0.0025 #freezing temperature
-        for sweep = 1:500 #num trials at each temperature
+        for sweep = 1:300 #num trials at each temperature
             newTrip = getNeighbor(currentTrip)
             newDistance = calculateTripDistance(newTrip[:, end-1:end])
             if newDistance < shortestDistance
@@ -160,11 +160,11 @@ function anneal(points::Matrix, getNeighbor::Function)
     return shortestTrip    
 end
 
-function mainProcess(filepath, numTrials)
+function mainProcess(filepath, numTrials, counterStart)
     df = CSV.File(filepath) |> DataFrame
-    nadf = Array(nadf)
+    nadf = Array(df[!,[:State,:Latitude,:Longitude]])
     newpts = anneal(nadf, switchTwoPoints)
-    counter = 0
+    counter = counterStart
     for k = 1:numTrials
         newpts = anneal(newpts, shiftSectionByOneRight)
         p = plotTrip(newpts)
