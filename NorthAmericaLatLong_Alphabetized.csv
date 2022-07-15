@@ -35,7 +35,7 @@ KY,Frankfort,Kentucky,USA,38.186722,-84.875374
 LA,Baton Rouge,Louisiana,USA,30.457069,-91.187393
 MA,Boston,Massachusetts,USA,42.358162,-71.063698
 MB,Winnipeg,Manitoba,Canada,49.88298749,-97.16599186
-MCH,Chetumal,Michoacan,Mexico,18.5036,-88.3053
+QR,Chetumal,Quintana Roo,Mexico,18.5036,-88.3053
 MD,Annapolis,Maryland,USA,38.978764,-76.490936
 ME,Augusta,Maine,USA,44.307167,-69.781693
 MEX,Toluca,México,Mexico,19.2925,-99.6569
@@ -93,3 +93,5 @@ WY,Cheyenne,Wyoming,USA,41.140259,-104.820236
 YT,Whitehorse,Yukon,Canada,60.71671897,-135.0499844
 YUC,Mérida,Yucatán,Mexico,20.97,-89.62
 ZAC,Zacatecas,Zacatecas,Mexico,22.7736,-102.5736
+OT,Ottawa,Ottawa,Canada,45.424721,-75.695
+MCH,Morelia,Michoacan,Mexico,19.706,-101.195
