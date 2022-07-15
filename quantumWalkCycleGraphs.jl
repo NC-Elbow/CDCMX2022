@@ -38,4 +38,6 @@ Let's try a 100 vertex cycle graph
 L = buildLaplacian(100)
 getProbability(1,50,L,10)
 
+allprobs = map(n -> getProbability(1,n,L,50),collect(1:100));
+plot(allprobs)
 =#
