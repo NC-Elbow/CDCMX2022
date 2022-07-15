@@ -1,0 +1,8 @@
+ffmpeg -r 20 -i 1%3d.png -pix_fmt yuv420p test.mp4
+
+This says
+take frame rate  = 20 frames/second
+iterate through files starting with 1 (we start at 1000)
+and look for files of the form 1 followed by three digits.
+Then allow format to be mp4
+and test.mp4 is thename of the final file output.
